@@ -208,7 +208,7 @@ sensor.setLowpassAlpha(0.1f);
 
 ```cpp
 sensor.add(10.5f);              // Без часової мітки
-sensor.add(10.5f, millis());    // З часовою міткою
+sensor.add(10.5f, HAL_GetTick());    // З часовою міткою
 ```
 
 #### `operator+=(T value)`
