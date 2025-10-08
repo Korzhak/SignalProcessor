@@ -65,7 +65,7 @@ YourProject/
 
 ### Варіант 2: Додавання як submodule (Git)
 ```bash
-git submodule add https://github.com/your-repo/SignalProcessor.git Submodules/SignalProcessor
+git submodule add https://github.com/Korzhak/SignalProcessor.git Submodules/SignalProcessor
 ```
 
 ### Підключення
