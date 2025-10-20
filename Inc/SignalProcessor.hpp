@@ -51,7 +51,6 @@ private:
 
     // Фільтри
     float ema_;             // Exponential Moving Average
-    float lpFiltered_;      // Low-pass фільтр
 
     // Похідна та інтегратор (для даних з часовими мітками)
     T lastValue_;           // Попереднє значення
@@ -96,7 +95,7 @@ public:
         : count_(0), index_(0),
           sum_(0.0f), sumSq_(0.0f),
           minVal_(0), maxVal_(0), needRecalcMinMax_(false),
-          ema_(0.0f), lpFiltered_(0.0f),
+          ema_(0.0f),
           lastValue_(0), lastTimeMs_(0),
           derivative_(0.0f), derivativeFiltered_(0.0f),
           integrator_(0.0f), lastIntegrandValue_(0.0f),
@@ -176,13 +175,6 @@ public:
             ema_ = alphaEma_ * (float)value + (1.0f - alphaEma_) * ema_;
         }
 
-        // Оновлення Low-pass фільтра
-        if (count_ == 1) {
-            lpFiltered_ = (float)value;
-        } else {
-            lpFiltered_ = alphaLowpass_ * (float)value + (1.0f - alphaLowpass_) * lpFiltered_;
-        }
-
         // Похідна та інтегратор (якщо передані часові мітки)
         if (timeMs > 0 && lastTimeMs_ > 0 && timeMs > lastTimeMs_) {
             float dt = (float)(timeMs - lastTimeMs_) * 0.001f;  // секунди
@@ -234,7 +226,6 @@ public:
         minVal_ = maxVal_ = 0;
         needRecalcMinMax_ = false;
         ema_ = 0.0f;
-        lpFiltered_ = 0.0f;
         lastValue_ = 0;
         lastTimeMs_ = 0;
         derivative_ = 0.0f;
@@ -304,9 +295,6 @@ public:
 
     /** Simple Moving Average (те саме що getMean) */
     float getSma() const { return getMean(); }
-
-    /** Low-pass фільтр */
-    float getLowpass() const { return lpFiltered_; }
 
     // ========================================
     // ПОХІДНА ТА ІНТЕГРАТОР
