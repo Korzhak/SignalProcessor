@@ -55,6 +55,8 @@ private:
     // Похідна та інтегратор (для даних з часовими мітками)
     T lastValue_;           // Попереднє значення
     uint32_t lastTimeMs_;   // Попередня часова мітка (мс)
+    uint16_t derivativePeriodMs_; // Період похідної в мс
+    bool useEmaFilteredValueForDerivation_; // Чи використовуємо фільтроване значення для розрахунку похідної
     float derivative_;      // Похідна (raw)
     float derivativeFiltered_; // Згладжена похідна
     float integrator_;      // Накопичений інтеграл
@@ -112,6 +114,16 @@ public:
      */
     void setEmaAlpha(float alpha) { 
         alphaEma_ = (alpha < 0.0f) ? 0.0f : (alpha > 1.0f) ? 1.0f : alpha;
+    }
+
+    void setDerivativePeriodMs(uint16_t period)
+    {
+    	derivativePeriodMs_ = period;
+    }
+
+    void setIsEmaUseForDerivative(bool isEmaUse)
+    {
+    	useEmaFilteredValueForDerivation_ = isEmaUse;
     }
 
     /**
@@ -176,19 +188,19 @@ public:
         }
 
         // Похідна та інтегратор (якщо передані часові мітки)
-        if (timeMs > 0 && lastTimeMs_ > 0 && timeMs > lastTimeMs_) {
+        if (timeMs > 0 && (timeMs - lastTimeMs_ > derivativePeriodMs_)) {
             float dt = (float)(timeMs - lastTimeMs_) * 0.001f;  // секунди
             
+            int val = useEmaFilteredValueForDerivation_ ? ema_ : value;
             // Сира похідна
-            float rawDerivative = ((float)value - (float)lastValue_) / dt;
+            float rawDerivative = (float) ((int)val - lastValue_) / dt;
             derivative_ = rawDerivative;
             
             // Згладжена похідна (EMA)
             if (count_ <= 2) {
                 derivativeFiltered_ = rawDerivative;
             } else {
-                derivativeFiltered_ = alphaDerivFilter_ * rawDerivative + 
-                                     (1.0f - alphaDerivFilter_) * derivativeFiltered_;
+                derivativeFiltered_ = alphaDerivFilter_ * rawDerivative + (1.0f - alphaDerivFilter_) * derivativeFiltered_;
             }
             
             // Інтегратор (трапецоїдальний метод для точності)
@@ -196,12 +208,15 @@ public:
                 integrator_ += 0.5f * (lastIntegrandValue_ + (float)value) * dt;
             }
             lastIntegrandValue_ = (float)value;
+
+            if (timeMs > 0) lastTimeMs_ = timeMs;
+            // Оновлення стану
+            lastValue_ = val;
         }
 
-        // Оновлення стану
-        lastValue_ = value;
-        if (timeMs > 0) lastTimeMs_ = timeMs;
+
         
+
         // Циклічне переміщення індексу
         index_++;
         if (index_ >= N) index_ = 0;
